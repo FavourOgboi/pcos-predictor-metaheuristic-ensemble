@@ -1,0 +1,11 @@
+check,value
+Rows in raw dataset,541
+Columns in raw dataset,6
+Exact duplicate rows in raw data,0
+Rows in cleaned dataset,541
+Columns in cleaned dataset,6
+Non-numeric AMH entries detected,1
+Range flags handled,0
+Remaining missing cells after cleaning,0
+PCOS negative count,364
+PCOS positive count,177

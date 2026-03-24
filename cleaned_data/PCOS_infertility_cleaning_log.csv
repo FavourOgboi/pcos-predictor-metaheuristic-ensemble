@@ -1,0 +1,4 @@
+step,detail,affected_items
+Standardized column names,Renamed the hormonal subset columns into a stable schema.,6
+Flagged non-numeric AMH value,Detected the single non-numeric AMH entry and converted it to missing during numeric coercion.,1
+Imputed hormonal value,Filled missing values in amh_ng_ml using the median.,1
