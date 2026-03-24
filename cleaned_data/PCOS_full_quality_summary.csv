@@ -1,0 +1,11 @@
+check,value
+Rows in raw dataset,541
+Columns in raw dataset,45
+Rows in cleaned dataset,541
+Columns in cleaned dataset,44
+Exact duplicate rows in raw data,0
+Duplicate rows removed after identifier drop,0
+Rows with missing target removed,0
+Columns renamed,42
+Range flags handled,7
+Remaining missing cells after cleaning,0

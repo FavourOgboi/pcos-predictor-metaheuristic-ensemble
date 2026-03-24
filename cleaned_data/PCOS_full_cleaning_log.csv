@@ -1,0 +1,32 @@
+step,detail,affected_items
+Dropped empty columns,Removed workbook artefact columns: ['Unnamed: 44'],1
+Dropped identifier columns,"Removed non-informative identifier columns: ['Sl. No', 'Patient File No.']",2
+Standardized column names,Renamed clinical variables to stable snake_case names.,42
+Applied range sanity checks,Set implausible values to missing in pulse_rate_bpm.,2
+Applied range sanity checks,Set implausible values to missing in cycle_length_days.,1
+Applied range sanity checks,Set implausible values to missing in systolic_bp_mmhg.,1
+Applied range sanity checks,Set implausible values to missing in diastolic_bp_mmhg.,1
+Applied range sanity checks,Set implausible values to missing in endometrium_mm.,2
+Imputed categorical-like column,Filled missing values in fast_food_y_n using the mode.,1
+Imputed continuous column,Filled missing values in pulse_rate_bpm using the median.,2
+Imputed continuous column,Filled missing values in cycle_length_days using the median.,1
+Imputed continuous column,Filled missing values in marriage_status_yrs using the median.,1
+Imputed continuous column,Filled missing values in beta_hcg_ii_miu_ml using the median.,1
+Imputed continuous column,Filled missing values in amh_ng_ml using the median.,1
+Imputed continuous column,Filled missing values in systolic_bp_mmhg using the median.,1
+Imputed continuous column,Filled missing values in diastolic_bp_mmhg using the median.,1
+Imputed continuous column,Filled missing values in endometrium_mm using the median.,2
+Applied range sanity checks,Set implausible values to missing in pulse_rate_bpm.,2
+Applied range sanity checks,Set implausible values to missing in cycle_length_days.,1
+Applied range sanity checks,Set implausible values to missing in systolic_bp_mmhg.,1
+Applied range sanity checks,Set implausible values to missing in diastolic_bp_mmhg.,1
+Applied range sanity checks,Set implausible values to missing in endometrium_mm.,2
+Imputed categorical-like column,Filled missing values in fast_food_y_n using the mode.,1
+Imputed continuous column,Filled missing values in pulse_rate_bpm using the median.,2
+Imputed continuous column,Filled missing values in cycle_length_days using the median.,1
+Imputed continuous column,Filled missing values in marriage_status_yrs using the median.,1
+Imputed continuous column,Filled missing values in beta_hcg_ii_miu_ml using the median.,1
+Imputed continuous column,Filled missing values in amh_ng_ml using the median.,1
+Imputed continuous column,Filled missing values in systolic_bp_mmhg using the median.,1
+Imputed continuous column,Filled missing values in diastolic_bp_mmhg using the median.,1
+Imputed continuous column,Filled missing values in endometrium_mm using the median.,2

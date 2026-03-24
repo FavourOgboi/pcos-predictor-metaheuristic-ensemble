@@ -1,0 +1,9 @@
+step,detail,affected_items
+Standardized survey column names,Renamed the raw survey headers into the stable harmonized schema.,16
+Removed duplicate survey rows,Dropped exact duplicate survey responses.,1
+Standardized height units,Converted mixed survey height entries into centimeters.,463
+Created derived features,"Derived height_cm, bmi, cycle_regularity, and cycle_length_days.",4
+Applied range sanity checks,Set implausible values to missing in period_duration_days.,2
+Imputed continuous column,Filled missing values in period_duration_days using the median.,2
+Imputed continuous column,Filled missing values in height_cm using the median.,1
+Imputed continuous column,Filled missing values in bmi using the median.,1

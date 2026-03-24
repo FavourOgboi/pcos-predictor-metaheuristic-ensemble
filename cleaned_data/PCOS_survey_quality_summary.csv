@@ -1,0 +1,10 @@
+check,value
+Rows in raw dataset,465
+Columns in raw dataset,16
+Rows in cleaned dataset,464
+Columns in cleaned dataset,20
+Exact duplicate rows removed,1
+Columns renamed,16
+Range flags handled,2
+Remaining missing cells in cleaned table,0
+Remaining missing cells in modeling view,0

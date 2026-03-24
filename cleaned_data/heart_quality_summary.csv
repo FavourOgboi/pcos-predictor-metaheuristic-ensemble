@@ -1,0 +1,9 @@
+check,value
+Rows in raw dataset,1025
+Columns in raw dataset,14
+Exact duplicate rows removed,723
+Unique rows after deduplication,302
+Female rows retained,96
+Columns in cleaned cohort,14
+Range flags handled,0
+Remaining missing cells after cleaning,0

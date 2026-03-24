@@ -1,0 +1,4 @@
+step,detail,affected_items
+Removed duplicate rows,Dropped exact duplicate records from the raw heart dataset before subgroup filtering.,723
+Filtered female cohort,Selected only female records using sex == 0.,96
+Standardized column names,Renamed coded cardiovascular fields to clearer analysis-friendly names.,12
