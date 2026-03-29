@@ -1,0 +1,17 @@
+[
+  "amh_ng_ml",
+  "fsh_miu_ml",
+  "lh_miu_ml",
+  "fsh_lh_ratio",
+  "tsh_miu_l",
+  "prl_ng_ml",
+  "vit_d3_ng_ml",
+  "prg_ng_ml",
+  "beta_hcg_i_miu_ml",
+  "beta_hcg_ii_miu_ml",
+  "follicle_no_left",
+  "follicle_no_right",
+  "avg_follicle_size_left_mm",
+  "avg_follicle_size_right_mm",
+  "endometrium_mm"
+]

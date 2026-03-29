@@ -1,0 +1,21 @@
+[
+  "age_yrs",
+  "bmi",
+  "cycle_regularity_binary",
+  "cycle_length_days",
+  "weight_gain_y_n",
+  "hair_growth_y_n",
+  "skin_darkening_y_n",
+  "hair_loss_y_n",
+  "pimples_y_n",
+  "fast_food_y_n",
+  "regular_exercise_y_n",
+  "systolic_bp_mmhg",
+  "diastolic_bp_mmhg",
+  "waist_hip_ratio",
+  "rbs_mg_dl",
+  "symptom_burden",
+  "bmi_category",
+  "bp_elevated_flag",
+  "lifestyle_risk"
+]
