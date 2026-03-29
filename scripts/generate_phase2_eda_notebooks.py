@@ -139,9 +139,14 @@ def build_clinical_notebook() -> list[dict]:
             # Fixing the random seed is keeping any sampling or jitter behavior stable across reruns.
             np.random.seed(42)
 
-            # Configuring the plotting theme is keeping the visuals readable and consistent across the notebook.
-            sns.set_theme(style="whitegrid", context="talk")
+            # Configuring the plotting theme is keeping the visuals readable, lighter, and better sized for notebook EDA work.
+            sns.set_theme(style="whitegrid", context="notebook")
             plt.rcParams["figure.dpi"] = 120
+            plt.rcParams["axes.titlesize"] = 12
+            plt.rcParams["axes.labelsize"] = 10
+            plt.rcParams["xtick.labelsize"] = 9
+            plt.rcParams["ytick.labelsize"] = 9
+            plt.rcParams["legend.fontsize"] = 9
             pd.set_option("display.max_columns", None)
             pd.set_option("display.max_rows", 200)
 
@@ -195,6 +200,11 @@ def build_clinical_notebook() -> list[dict]:
                 summary["prevalence_pct"] = (summary["prevalence"] * 100).round(1)
                 return summary[["pcos_label", "n", "positive_count", "prevalence_pct"]]
 
+            # Applying a light finish to each axis is keeping the charts cleaner and less crowded.
+            def polish_axis(ax: plt.Axes, grid_axis: str = "y") -> None:
+                sns.despine(ax=ax, trim=True)
+                ax.grid(axis=grid_axis, alpha=0.18, linewidth=0.7)
+
             # Plotting numeric distributions through one helper is keeping the comparison style consistent across questions.
             def plot_numeric_by_target(
                 data: pd.DataFrame,
@@ -202,10 +212,13 @@ def build_clinical_notebook() -> list[dict]:
                 ylabel: str,
                 title: str,
                 slug: str,
-                kind: str = "box",
+                kind: str = "boxen_strip",
+                figsize: tuple[float, float] = (6.2, 4.0),
+                log_scale: bool = False,
+                discrete: bool = False,
             ) -> None:
-                fig, ax = plt.subplots(figsize=(8, 5))
-                if kind == "violin":
+                fig, ax = plt.subplots(figsize=figsize)
+                if kind == "violin_strip":
                     sns.violinplot(
                         data=data,
                         x="pcos_label",
@@ -214,6 +227,7 @@ def build_clinical_notebook() -> list[dict]:
                         palette=PCOS_LABEL_PALETTE,
                         cut=0,
                         inner=None,
+                        linewidth=0.9,
                         ax=ax,
                     )
                     sns.stripplot(
@@ -227,6 +241,33 @@ def build_clinical_notebook() -> list[dict]:
                         jitter=0.20,
                         ax=ax,
                     )
+                    ax.set_xlabel("")
+                    ax.set_ylabel(ylabel)
+                    polish_axis(ax)
+                elif kind == "boxen_strip":
+                    sns.boxenplot(
+                        data=data,
+                        x="pcos_label",
+                        y=feature,
+                        order=PCOS_LABEL_ORDER,
+                        palette=PCOS_LABEL_PALETTE,
+                        linewidth=0.8,
+                        ax=ax,
+                    )
+                    sns.stripplot(
+                        data=data,
+                        x="pcos_label",
+                        y=feature,
+                        order=PCOS_LABEL_ORDER,
+                        color="#334155",
+                        alpha=0.22,
+                        size=2.7,
+                        jitter=0.18,
+                        ax=ax,
+                    )
+                    ax.set_xlabel("")
+                    ax.set_ylabel(ylabel)
+                    polish_axis(ax)
                 elif kind == "kde":
                     for label in PCOS_LABEL_ORDER:
                         subset = data.loc[data["pcos_label"] == label, feature].dropna()
@@ -240,41 +281,76 @@ def build_clinical_notebook() -> list[dict]:
                             ax=ax,
                         )
                     ax.legend(frameon=True)
+                    ax.set_xlabel(ylabel)
+                    ax.set_ylabel("Density")
+                    polish_axis(ax, grid_axis="both")
+                elif kind == "hist_hue":
+                    sns.histplot(
+                        data=data,
+                        x=feature,
+                        hue="pcos_label",
+                        hue_order=PCOS_LABEL_ORDER,
+                        palette=PCOS_LABEL_PALETTE,
+                        bins=None if discrete else 22,
+                        discrete=discrete,
+                        stat="density",
+                        common_norm=False,
+                        multiple="dodge" if discrete else "layer",
+                        alpha=0.32,
+                        edgecolor="white",
+                        linewidth=0.7,
+                        ax=ax,
+                    )
+                    if log_scale:
+                        ax.set_xscale("log")
+                    ax.set_xlabel(ylabel)
+                    ax.set_ylabel("Density")
+                    polish_axis(ax)
+                elif kind == "ecdf_hue":
+                    for label in PCOS_LABEL_ORDER:
+                        subset = data.loc[data["pcos_label"] == label, feature].dropna()
+                        sns.ecdfplot(
+                            subset,
+                            label=label,
+                            color=PCOS_LABEL_PALETTE[label],
+                            linewidth=2,
+                            ax=ax,
+                        )
+                    if log_scale:
+                        ax.set_xscale("log")
+                    ax.legend(frameon=True, title="")
+                    ax.set_xlabel(ylabel)
+                    ax.set_ylabel("Cumulative Proportion")
+                    polish_axis(ax, grid_axis="both")
                 else:
-                    sns.boxplot(
+                    sns.violinplot(
                         data=data,
                         x="pcos_label",
                         y=feature,
                         order=PCOS_LABEL_ORDER,
                         palette=PCOS_LABEL_PALETTE,
+                        cut=0,
+                        inner="quartile",
+                        linewidth=0.8,
                         ax=ax,
                     )
-                    sns.stripplot(
-                        data=data,
-                        x="pcos_label",
-                        y=feature,
-                        order=PCOS_LABEL_ORDER,
-                        color="#264653",
-                        alpha=0.30,
-                        size=3,
-                        jitter=0.20,
-                        ax=ax,
-                    )
+                    ax.set_xlabel("")
+                    ax.set_ylabel(ylabel)
+                    polish_axis(ax)
                 ax.set_title(title)
-                ax.set_xlabel("")
-                ax.set_ylabel(ylabel)
                 save_figure(fig, slug)
                 plt.show()
 
             # Plotting prevalence bars through one helper is simplifying the repeated binary-feature visuals.
             def plot_binary_prevalence(summary: pd.DataFrame, title: str, slug: str, ylabel: str = "Prevalence (%)") -> None:
-                fig, ax = plt.subplots(figsize=(7, 5))
+                fig, ax = plt.subplots(figsize=(6.0, 4.0))
                 sns.barplot(
                     data=summary,
                     x="pcos_label",
                     y="prevalence_pct",
                     order=PCOS_LABEL_ORDER,
                     palette=PCOS_LABEL_PALETTE,
+                    saturation=0.88,
                     ax=ax,
                 )
                 for patch in ax.patches:
@@ -291,6 +367,7 @@ def build_clinical_notebook() -> list[dict]:
                 ax.set_title(title)
                 ax.set_xlabel("")
                 ax.set_ylabel(ylabel)
+                polish_axis(ax)
                 save_figure(fig, slug)
                 plt.show()
             """
@@ -450,11 +527,10 @@ def build_clinical_notebook() -> list[dict]:
         code_cell(
             """
             # Plotting the target distribution is showing the class balance that later modeling work will inherit.
-            fig, ax = plt.subplots(figsize=(7, 5))
-            sns.barplot(
-                data=target_q01,
+            fig, ax = plt.subplots(figsize=(6.0, 4.0))
+            sns.countplot(
+                data=df,
                 x="pcos_label",
-                y="count",
                 order=PCOS_LABEL_ORDER,
                 palette=PCOS_LABEL_PALETTE,
                 ax=ax,
@@ -470,9 +546,10 @@ def build_clinical_notebook() -> list[dict]:
                     xytext=(0, 6),
                     textcoords="offset points",
                 )
-            ax.set_title("Question 1: Cleaned Clinical PCOS Target Distribution")
+            ax.set_title("Clinical PCOS Target Distribution")
             ax.set_xlabel("")
             ax.set_ylabel("Participant Count")
+            polish_axis(ax)
             save_figure(fig, "q01_clinical_target_distribution.png")
             plt.show()
             """
@@ -516,17 +593,17 @@ def build_clinical_notebook() -> list[dict]:
         code_cell(
             """
             # Plotting the phenotype heatmap is showing where the group-level clinical profile is shifting most clearly.
-            fig, ax = plt.subplots(figsize=(9, 8))
+            fig, ax = plt.subplots(figsize=(7.0, 5.2))
             sns.heatmap(
                 profile_mean_q02,
                 annot=True,
                 fmt=".2f",
-                cmap="RdYlBu_r",
+                cmap="YlGnBu",
                 linewidths=0.5,
                 cbar_kws={"label": "Group Mean"},
                 ax=ax,
             )
-            ax.set_title("Question 2: Group Mean Clinical Phenotype Profile")
+            ax.set_title("Core Clinical Phenotype Profile by PCOS Status")
             ax.set_xlabel("")
             ax.set_ylabel("Feature")
             save_figure(fig, "q02_core_phenotype_heatmap.png")
@@ -553,21 +630,21 @@ def build_clinical_notebook() -> list[dict]:
     )
 
     numeric_questions = [
-        (3, "Does age differ by PCOS status?", "age_yrs", "Age (years)", "q03_age_vs_pcos_boxplot.png", "This figure is showing whether the age distribution is shifting materially between the two PCOS groups. The small separation already visible in the cleaned cohort is suggesting that age alone is not behaving like a strong standalone discriminator, which matters because it should probably act as a context feature rather than a dominant screening signal."),
-        (4, "Does weight differ by PCOS status?", "weight_kg", "Weight (kg)", "q04_weight_vs_pcos_boxplot.png", "The weight distribution is showing a visible upward shift in the PCOS-positive cohort. That pattern is supporting the idea that higher body mass is clustering with PCOS in this sample, which matters because weight is easy to obtain and may strengthen non-invasive screening when combined with more specific symptoms."),
-        (5, "Does BMI differ by PCOS status?", "bmi", "Body Mass Index", "q05_bmi_vs_pcos_boxplot.png", "BMI is showing one of the clearer non-invasive shifts in the cleaned clinical cohort, with the PCOS-positive group carrying a higher central tendency. This matters clinically because adiposity is often traveling with insulin resistance and ovulatory dysfunction, making BMI a strong candidate for later routine-feature modeling."),
-        (6, "Does waist-hip ratio differ by PCOS status?", "waist_hip_ratio", "Waist-Hip Ratio", "q06_waist_hip_ratio_vs_pcos_boxplot.png", "Waist-hip ratio is showing only a modest separation relative to BMI, which is suggesting that this anthropometric marker may add nuance but not dominate the phenotype story by itself. It is still worth retaining because central fat distribution can signal metabolic stress even when total BMI is only moderately elevated."),
-        (7, "Does pulse rate differ by PCOS status?", "pulse_rate_bpm", "Pulse Rate (bpm)", "q07_pulse_rate_vs_pcos_boxplot.png", "Pulse rate is showing little visual separation between the two groups, which is suggesting a weaker direct relationship with PCOS in this cohort. This matters because weak vital-sign movement can help us avoid overvaluing features that are easy to collect but clinically noisy."),
-        (8, "Does respiratory rate differ by PCOS status?", "respiratory_rate_breaths_min", "Respiratory Rate (breaths/min)", "q08_respiratory_rate_vs_pcos_boxplot.png", "Respiratory rate is appearing fairly stable across groups, which is suggesting that it is not a major PCOS phenotype marker in this dataset. That weak movement is useful in itself because it helps distinguish broad physiological context variables from more syndrome-specific features."),
-        (9, "Does hemoglobin differ by PCOS status?", "hb_g_dl", "Hemoglobin (g/dL)", "q09_hb_vs_pcos_boxplot.png", "Hemoglobin is showing only a light shift between groups, so it is likely acting as a background physiological marker rather than a headline discriminator. This pattern is encouraging a cautious interpretation of blood indices unless they meaningfully improve multivariable performance later."),
-        (10, "Does the dataset's recorded cycle-length measure differ by PCOS status?", "cycle_length_days", "Recorded Cycle-Length Measure", "q10_cycle_length_measure_vs_pcos_boxplot.png", "The recorded cycle-length measure is shifting across PCOS status, but it is behaving like a short ordinal clinical record rather than a literal 21-to-35-day cycle field. This still matters because menstrual-pattern recording is clinically relevant, but the variable should be interpreted as a recorded measure rather than as a textbook day count."),
-        (11, "Does cycle_regularity_code differ by PCOS status?", "cycle_regularity_code", "Cycle Regularity Code", "q11_cycle_regularity_code_vs_pcos_boxplot.png", "The cycle-regularity code is showing a stronger group shift than many of the routine vital signs, which is reinforcing menstrual irregularity as a core PCOS signal. Because the coding scheme is ordinal and not yet mapped to human labels, it should be handled as a recorded code until a documented mapping is introduced."),
-        (12, "Does systolic blood pressure differ by PCOS status?", "systolic_bp_mmhg", "Systolic Blood Pressure (mmHg)", "q12_systolic_bp_vs_pcos_boxplot.png", "Systolic blood pressure is showing only a limited shift between groups in the clinical cohort. This is suggesting that blood pressure may contribute more to cardiometabolic context than to direct PCOS discrimination when used alone."),
-        (13, "Does diastolic blood pressure differ by PCOS status?", "diastolic_bp_mmhg", "Diastolic Blood Pressure (mmHg)", "q13_diastolic_bp_vs_pcos_boxplot.png", "Diastolic blood pressure is remaining tightly clustered across the two groups, which is again pointing to a weak standalone relationship with PCOS status in this dataset. This observation will still matter later when the cardiometabolic comparison notebook is examining broader risk context."),
-        (14, "Does random blood sugar differ by PCOS status?", "rbs_mg_dl", "Random Blood Sugar (mg/dL)", "q14_rbs_vs_pcos_boxplot.png", "Random blood sugar is showing a slight upward shift and a wider upper tail in the PCOS-positive group. That pattern is clinically relevant because glycemic stress is often co-traveling with PCOS, even when blood sugar alone is not cleanly separating the groups."),
+        (3, "Does age differ by PCOS status?", "age_yrs", "Age (years)", "q03_age_vs_pcos_distribution.png", "violin_strip", "This figure is showing whether the age distribution is shifting materially between the two PCOS groups. The small separation already visible in the cleaned cohort is suggesting that age alone is not behaving like a strong standalone discriminator, which matters because it should probably act as a context feature rather than a dominant screening signal."),
+        (4, "Does weight differ by PCOS status?", "weight_kg", "Weight (kg)", "q04_weight_vs_pcos_distribution.png", "violin_strip", "The weight distribution is showing a visible upward shift in the PCOS-positive cohort. That pattern is supporting the idea that higher body mass is clustering with PCOS in this sample, which matters because weight is easy to obtain and may strengthen non-invasive screening when combined with more specific symptoms."),
+        (5, "Does BMI differ by PCOS status?", "bmi", "Body Mass Index", "q05_bmi_vs_pcos_distribution.png", "violin_strip", "BMI is showing one of the clearer non-invasive shifts in the cleaned clinical cohort, with the PCOS-positive group carrying a higher central tendency. This matters clinically because adiposity is often traveling with insulin resistance and ovulatory dysfunction, making BMI a strong candidate for later routine-feature modeling."),
+        (6, "Does waist-hip ratio differ by PCOS status?", "waist_hip_ratio", "Waist-Hip Ratio", "q06_waist_hip_ratio_vs_pcos_distribution.png", "boxen_strip", "Waist-hip ratio is showing only a modest separation relative to BMI, which is suggesting that this anthropometric marker may add nuance but not dominate the phenotype story by itself. It is still worth retaining because central fat distribution can signal metabolic stress even when total BMI is only moderately elevated."),
+        (7, "Does pulse rate differ by PCOS status?", "pulse_rate_bpm", "Pulse Rate (bpm)", "q07_pulse_rate_vs_pcos_distribution.png", "boxen_strip", "Pulse rate is showing little visual separation between the two groups, which is suggesting a weaker direct relationship with PCOS in this cohort. This matters because weak vital-sign movement can help us avoid overvaluing features that are easy to collect but clinically noisy."),
+        (8, "Does respiratory rate differ by PCOS status?", "respiratory_rate_breaths_min", "Respiratory Rate (breaths/min)", "q08_respiratory_rate_vs_pcos_distribution.png", "boxen_strip", "Respiratory rate is appearing fairly stable across groups, which is suggesting that it is not a major PCOS phenotype marker in this dataset. That weak movement is useful in itself because it helps distinguish broad physiological context variables from more syndrome-specific features."),
+        (9, "Does hemoglobin differ by PCOS status?", "hb_g_dl", "Hemoglobin (g/dL)", "q09_hb_vs_pcos_distribution.png", "boxen_strip", "Hemoglobin is showing only a light shift between groups, so it is likely acting as a background physiological marker rather than a headline discriminator. This pattern is encouraging a cautious interpretation of blood indices unless they meaningfully improve multivariable performance later."),
+        (10, "Does the dataset's recorded cycle-length measure differ by PCOS status?", "cycle_length_days", "Recorded Cycle-Length Measure", "q10_cycle_length_measure_vs_pcos_distribution.png", "boxen_strip", "The recorded cycle-length measure is shifting across PCOS status, but it is behaving like a short ordinal clinical record rather than a literal 21-to-35-day cycle field. This still matters because menstrual-pattern recording is clinically relevant, but the variable should be interpreted as a recorded measure rather than as a textbook day count."),
+        (11, "Does cycle_regularity_code differ by PCOS status?", "cycle_regularity_code", "Cycle Regularity Code", "q11_cycle_regularity_code_vs_pcos_distribution.png", "boxen_strip", "The cycle-regularity code is showing a stronger group shift than many of the routine vital signs, which is reinforcing menstrual irregularity as a core PCOS signal. Because the coding scheme is ordinal and not yet mapped to human labels, it should be handled as a recorded code until a documented mapping is introduced."),
+        (12, "Does systolic blood pressure differ by PCOS status?", "systolic_bp_mmhg", "Systolic Blood Pressure (mmHg)", "q12_systolic_bp_vs_pcos_distribution.png", "ecdf_hue", "Systolic blood pressure is showing only a limited shift between groups in the clinical cohort. This is suggesting that blood pressure may contribute more to cardiometabolic context than to direct PCOS discrimination when used alone."),
+        (13, "Does diastolic blood pressure differ by PCOS status?", "diastolic_bp_mmhg", "Diastolic Blood Pressure (mmHg)", "q13_diastolic_bp_vs_pcos_distribution.png", "ecdf_hue", "Diastolic blood pressure is remaining tightly clustered across the two groups, which is again pointing to a weak standalone relationship with PCOS status in this dataset. This observation will still matter later when the cardiometabolic comparison notebook is examining broader risk context."),
+        (14, "Does random blood sugar differ by PCOS status?", "rbs_mg_dl", "Random Blood Sugar (mg/dL)", "q14_rbs_vs_pcos_distribution.png", "hist_hue", "Random blood sugar is showing a slight upward shift and a wider upper tail in the PCOS-positive group. That pattern is clinically relevant because glycemic stress is often co-traveling with PCOS, even when blood sugar alone is not cleanly separating the groups."),
     ]
 
-    for number, question, feature, ylabel, slug, insight in numeric_questions:
+    for number, question, feature, ylabel, slug, kind, insight in numeric_questions:
         cells.append(question_markdown(number, question))
         cells.append(
             code_cell(
@@ -586,9 +663,9 @@ def build_clinical_notebook() -> list[dict]:
                     data=df,
                     feature="{feature}",
                     ylabel="{ylabel}",
-                    title="Question {number}: {question}",
+                    title="{question}",
                     slug="{slug}",
-                    kind="box",
+                    kind="{kind}",
                 )
                 """
             )
@@ -632,7 +709,7 @@ def build_clinical_notebook() -> list[dict]:
                 # Plotting the grouped prevalence is showing how `{feature}` is concentrating by PCOS status.
                 plot_binary_prevalence(
                     summary=summary_q{number:02d},
-                    title="Question {number}: {label} Prevalence by PCOS Status",
+                    title="{label} Prevalence by PCOS Status",
                     slug="{slug}",
                 )
                 """
@@ -651,13 +728,13 @@ def build_clinical_notebook() -> list[dict]:
     )
 
     ovarian_questions = [
-        (22, "Do follicle counts on the left ovary differ by PCOS status?", "follicle_no_left", "Left Follicle Count", "q22_follicle_left_vs_pcos_boxplot.png", "Left-ovary follicle counts are showing a marked upward shift in the PCOS-positive group. This is clinically coherent because increased follicle burden is closely tied to the ovarian morphology associated with PCOS."),
-        (23, "Do follicle counts on the right ovary differ by PCOS status?", "follicle_no_right", "Right Follicle Count", "q23_follicle_right_vs_pcos_boxplot.png", "Right-ovary follicle counts are also showing a strong upward shift among PCOS-positive participants. Seeing the pattern on both sides is strengthening the interpretation that ovarian morphology is one of the clearest differentiators in the cleaned clinical cohort."),
-        (24, "Do average follicle sizes differ by PCOS status?", "avg_follicle_size_right_mm", "Average Right Follicle Size (mm)", "q24_avg_follicle_size_vs_pcos_violin.png", "Average follicle size is showing a more modest group separation than follicle count, which is suggesting that count may be the more informative ovarian measure here. This matters because it helps prioritize which invasive features are truly contributing unique signal."),
-        (25, "Does endometrium thickness differ by PCOS status?", "endometrium_mm", "Endometrium Thickness (mm)", "q25_endometrium_vs_pcos_boxplot.png", "Endometrium thickness is showing only a moderate shift between groups, which suggests it may offer supplementary biological context rather than headline discrimination. This is useful for interpretation, but it should likely sit below symptom burden and follicle count in later priority lists."),
+        (22, "Do follicle counts on the left ovary differ by PCOS status?", "follicle_no_left", "Left Follicle Count", "q22_follicle_left_vs_pcos_distribution.png", "boxen_strip", "Left-ovary follicle counts are showing a marked upward shift in the PCOS-positive group. This is clinically coherent because increased follicle burden is closely tied to the ovarian morphology associated with PCOS."),
+        (23, "Do follicle counts on the right ovary differ by PCOS status?", "follicle_no_right", "Right Follicle Count", "q23_follicle_right_vs_pcos_distribution.png", "boxen_strip", "Right-ovary follicle counts are also showing a strong upward shift among PCOS-positive participants. Seeing the pattern on both sides is strengthening the interpretation that ovarian morphology is one of the clearest differentiators in the cleaned clinical cohort."),
+        (24, "Do average follicle sizes differ by PCOS status?", "avg_follicle_size_right_mm", "Average Right Follicle Size (mm)", "q24_avg_follicle_size_vs_pcos_distribution.png", "violin_strip", "Average follicle size is showing a more modest group separation than follicle count, which is suggesting that count may be the more informative ovarian measure here. This matters because it helps prioritize which invasive features are truly contributing unique signal."),
+        (25, "Does endometrium thickness differ by PCOS status?", "endometrium_mm", "Endometrium Thickness (mm)", "q25_endometrium_vs_pcos_distribution.png", "boxen_strip", "Endometrium thickness is showing only a moderate shift between groups, which suggests it may offer supplementary biological context rather than headline discrimination. This is useful for interpretation, but it should likely sit below symptom burden and follicle count in later priority lists."),
     ]
 
-    for number, question, feature, ylabel, slug, insight in ovarian_questions:
+    for number, question, feature, ylabel, slug, kind, insight in ovarian_questions:
         cells.append(question_markdown(number, question))
         cells.append(
             code_cell(
@@ -668,7 +745,6 @@ def build_clinical_notebook() -> list[dict]:
                 """
             )
         )
-        plot_kind = "violin" if number == 24 else "box"
         cells.append(
             code_cell(
                 f"""
@@ -677,9 +753,9 @@ def build_clinical_notebook() -> list[dict]:
                     data=df,
                     feature="{feature}",
                     ylabel="{ylabel}",
-                    title="Question {number}: {question}",
+                    title="{question}",
                     slug="{slug}",
-                    kind="{plot_kind}",
+                    kind="{kind}",
                 )
                 """
             )
@@ -714,8 +790,8 @@ def build_clinical_notebook() -> list[dict]:
             code_cell(
                 f"""
                 # Plotting the follicle burden by symptom status is showing whether the symptom is aligning with ovarian morphology.
-                fig, ax = plt.subplots(figsize=(8, 5))
-                sns.boxplot(
+                fig, ax = plt.subplots(figsize=(6.4, 4.2))
+                sns.violinplot(
                     data=df,
                     x="{feature}_label",
                     y="total_follicle_count",
@@ -723,12 +799,15 @@ def build_clinical_notebook() -> list[dict]:
                     order=["No", "Yes"],
                     hue_order=PCOS_LABEL_ORDER,
                     palette=PCOS_LABEL_PALETTE,
+                    cut=0,
+                    inner="quartile",
                     ax=ax,
                 )
-                ax.set_title("Question {number}: Total Follicle Count by {feature_label} and PCOS Status")
+                ax.set_title("Total Follicle Count by {feature_label} and PCOS Status")
                 ax.set_xlabel("{feature_label} Reported")
                 ax.set_ylabel("Total Follicle Count")
                 ax.legend(title="")
+                polish_axis(ax)
                 save_figure(fig, "{slug}")
                 plt.show()
                 """
@@ -764,7 +843,7 @@ def build_clinical_notebook() -> list[dict]:
         code_cell(
             """
             # Plotting the joint anthropometric space is showing where the two groups are clustering together and apart.
-            fig, ax = plt.subplots(figsize=(8, 6))
+            fig, ax = plt.subplots(figsize=(6.6, 4.6))
             sns.scatterplot(
                 data=df,
                 x="bmi",
@@ -773,13 +852,14 @@ def build_clinical_notebook() -> list[dict]:
                 hue_order=PCOS_LABEL_ORDER,
                 palette=PCOS_LABEL_PALETTE,
                 alpha=0.75,
-                s=70,
+                s=46,
                 ax=ax,
             )
-            ax.set_title("Question 29: BMI and Waist-Hip Ratio by PCOS Status")
+            ax.set_title("BMI and Waist-Hip Ratio by PCOS Status")
             ax.set_xlabel("Body Mass Index")
             ax.set_ylabel("Waist-Hip Ratio")
             ax.legend(title="")
+            polish_axis(ax, grid_axis="both")
             save_figure(fig, "q29_bmi_waist_hip_joint_scatter.png")
             plt.show()
             """
@@ -811,7 +891,7 @@ def build_clinical_notebook() -> list[dict]:
         code_cell(
             """
             # Plotting the joint cardiometabolic space is showing whether the PCOS-positive cohort is sitting further along a risk-leaning profile.
-            fig, ax = plt.subplots(figsize=(8, 6))
+            fig, ax = plt.subplots(figsize=(6.6, 4.6))
             sns.scatterplot(
                 data=df,
                 x="systolic_bp_mmhg",
@@ -820,13 +900,14 @@ def build_clinical_notebook() -> list[dict]:
                 hue_order=PCOS_LABEL_ORDER,
                 palette=PCOS_LABEL_PALETTE,
                 alpha=0.75,
-                s=70,
+                s=46,
                 ax=ax,
             )
-            ax.set_title("Question 30: Systolic Blood Pressure and Random Blood Sugar by PCOS Status")
+            ax.set_title("Systolic Blood Pressure and Random Blood Sugar by PCOS Status")
             ax.set_xlabel("Systolic Blood Pressure (mmHg)")
             ax.set_ylabel("Random Blood Sugar (mg/dL)")
             ax.legend(title="")
+            polish_axis(ax, grid_axis="both")
             save_figure(fig, "q30_bp_rbs_joint_scatter.png")
             plt.show()
             """
@@ -884,7 +965,7 @@ def build_clinical_notebook() -> list[dict]:
         code_cell(
             """
             # Plotting the target-correlation ranking is highlighting which continuous variables deserve the most modeling attention.
-            fig, ax = plt.subplots(figsize=(9, 7))
+            fig, ax = plt.subplots(figsize=(6.6, 4.8))
             sns.barplot(
                 data=summary_q31,
                 y="feature",
@@ -893,9 +974,10 @@ def build_clinical_notebook() -> list[dict]:
                 ax=ax,
             )
             ax.axvline(0, color="#333333", linewidth=1)
-            ax.set_title("Question 31: Spearman Correlation with PCOS Status")
+            ax.set_title("Spearman Correlation with PCOS Status")
             ax.set_xlabel("Spearman Correlation")
             ax.set_ylabel("Feature")
+            polish_axis(ax)
             save_figure(fig, "q31_continuous_spearman_with_target.png")
             plt.show()
             """
@@ -932,7 +1014,7 @@ def build_clinical_notebook() -> list[dict]:
         code_cell(
             """
             # Plotting the symptom-correlation heatmap is showing where overlapping signal may reduce the need for redundant features.
-            fig, ax = plt.subplots(figsize=(8, 6))
+            fig, ax = plt.subplots(figsize=(7.0, 5.2))
             sns.heatmap(
                 summary_q32,
                 annot=True,
@@ -943,7 +1025,7 @@ def build_clinical_notebook() -> list[dict]:
                 linewidths=0.5,
                 ax=ax,
             )
-            ax.set_title("Question 32: Symptom Spearman Correlation Matrix")
+            ax.set_title("Symptom Spearman Correlation Matrix")
             save_figure(fig, "q32_symptom_spearman_heatmap.png")
             plt.show()
             """
@@ -985,7 +1067,7 @@ def build_clinical_notebook() -> list[dict]:
         code_cell(
             """
             # Plotting the overlap heatmap is showing whether the joint symptom state is concentrating PCOS prevalence.
-            fig, ax = plt.subplots(figsize=(7, 5))
+            fig, ax = plt.subplots(figsize=(6.2, 4.3))
             sns.heatmap(
                 heatmap_q33,
                 annot=True,
@@ -995,7 +1077,7 @@ def build_clinical_notebook() -> list[dict]:
                 cbar_kws={"label": "PCOS Prevalence (%)"},
                 ax=ax,
             )
-            ax.set_title("Question 33: PCOS Prevalence Across Pimples and Skin Darkening States")
+            ax.set_title("PCOS Prevalence Across Pimples and Skin Darkening States")
             ax.set_xlabel("")
             ax.set_ylabel("")
             save_figure(fig, "q33_pimples_skin_darkening_overlap_heatmap.png")
@@ -1039,7 +1121,7 @@ def build_clinical_notebook() -> list[dict]:
         code_cell(
             """
             # Plotting the BMI-category distribution is showing whether higher BMI classes are overrepresented among PCOS-positive participants.
-            fig, ax = plt.subplots(figsize=(9, 5))
+            fig, ax = plt.subplots(figsize=(6.2, 4.0))
             sns.countplot(
                 data=df,
                 x="bmi_category",
@@ -1049,10 +1131,11 @@ def build_clinical_notebook() -> list[dict]:
                 palette=PCOS_LABEL_PALETTE,
                 ax=ax,
             )
-            ax.set_title("Question 34: BMI Category Distribution by PCOS Status")
+            ax.set_title("BMI Category Distribution by PCOS Status")
             ax.set_xlabel("BMI Category")
             ax.set_ylabel("Participant Count")
             ax.legend(title="")
+            polish_axis(ax)
             save_figure(fig, "q34_bmi_category_distribution.png")
             plt.show()
             """
@@ -1091,13 +1174,14 @@ def build_clinical_notebook() -> list[dict]:
                 data=df,
                 feature="non_invasive_burden_score",
                 ylabel="Non-Invasive Burden Score",
-                title="Question 35: Non-Invasive Burden Score by PCOS Status",
+                title="Non-Invasive Burden Score by PCOS Status",
                 slug="q35_non_invasive_burden_score.png",
-                kind="violin",
+                kind="hist_hue",
+                discrete=True,
+                )
+                """
             )
-            """
         )
-    )
     cells.append(
         insight_markdown(
             """
@@ -1135,7 +1219,7 @@ def build_clinical_notebook() -> list[dict]:
         code_cell(
             """
             # Plotting the missed-case illustration is showing how quickly clinical cost grows when sensitivity drops.
-            fig, ax = plt.subplots(figsize=(8, 5))
+            fig, ax = plt.subplots(figsize=(6.0, 4.0))
             plot_q36 = summary_q36.copy()
             plot_q36["false_negative_rate_label"] = (plot_q36["false_negative_rate"] * 100).astype(int).astype(str) + "% FNR"
             sns.barplot(
@@ -1156,9 +1240,10 @@ def build_clinical_notebook() -> list[dict]:
                     xytext=(0, 6),
                     textcoords="offset points",
                 )
-            ax.set_title("Question 36: Illustrative False-Negative Cost in the Clinical Cohort")
+            ax.set_title("Illustrative False-Negative Cost in the Clinical Cohort")
             ax.set_xlabel("Assumed False-Negative Rate")
             ax.set_ylabel("Missed PCOS Cases")
+            polish_axis(ax)
             save_figure(fig, "q36_false_negative_cost_illustration.png")
             plt.show()
             """
@@ -1274,8 +1359,13 @@ def build_hormonal_notebook() -> list[dict]:
             np.random.seed(42)
 
             # Configuring the plotting theme is keeping the visuals aligned with the clinical notebook style.
-            sns.set_theme(style="whitegrid", context="talk")
+            sns.set_theme(style="whitegrid", context="notebook")
             plt.rcParams["figure.dpi"] = 120
+            plt.rcParams["axes.titlesize"] = 12
+            plt.rcParams["axes.labelsize"] = 10
+            plt.rcParams["xtick.labelsize"] = 9
+            plt.rcParams["ytick.labelsize"] = 9
+            plt.rcParams["legend.fontsize"] = 9
             pd.set_option("display.max_columns", None)
 
             # Resolving the project root is keeping the notebook portable across launch locations.
@@ -1303,6 +1393,10 @@ def build_hormonal_notebook() -> list[dict]:
                 fig.savefig(output_path, dpi=300, bbox_inches="tight")
                 return output_path
 
+            def polish_axis(ax: plt.Axes, grid_axis: str = "y") -> None:
+                sns.despine(ax=ax, trim=True)
+                ax.grid(axis=grid_axis, alpha=0.18, linewidth=0.7)
+
             def grouped_numeric_summary(data: pd.DataFrame, feature: str) -> pd.DataFrame:
                 return (
                     data.groupby("pcos_label")[feature]
@@ -1318,33 +1412,76 @@ def build_hormonal_notebook() -> list[dict]:
                 ylabel: str,
                 title: str,
                 slug: str,
+                kind: str = "violin_strip",
                 log_scale: bool = False,
+                figsize: tuple[float, float] = (6.2, 4.0),
             ) -> None:
-                fig, ax = plt.subplots(figsize=(8, 5))
-                sns.boxplot(
-                    data=data,
-                    x="pcos_label",
-                    y=feature,
-                    order=PCOS_LABEL_ORDER,
-                    palette=PCOS_LABEL_PALETTE,
-                    ax=ax,
-                )
-                sns.stripplot(
-                    data=data,
-                    x="pcos_label",
-                    y=feature,
-                    order=PCOS_LABEL_ORDER,
-                    color="#264653",
-                    alpha=0.25,
-                    size=3,
-                    jitter=0.18,
-                    ax=ax,
-                )
-                if log_scale:
-                    ax.set_yscale("log")
+                fig, ax = plt.subplots(figsize=figsize)
+                if kind == "violin_strip":
+                    sns.violinplot(
+                        data=data,
+                        x="pcos_label",
+                        y=feature,
+                        order=PCOS_LABEL_ORDER,
+                        palette=PCOS_LABEL_PALETTE,
+                        cut=0,
+                        inner=None,
+                        linewidth=0.8,
+                        ax=ax,
+                    )
+                    sns.stripplot(
+                        data=data,
+                        x="pcos_label",
+                        y=feature,
+                        order=PCOS_LABEL_ORDER,
+                        color="#334155",
+                        alpha=0.22,
+                        size=2.6,
+                        jitter=0.16,
+                        ax=ax,
+                    )
+                    if log_scale:
+                        ax.set_yscale("log")
+                    ax.set_xlabel("")
+                    ax.set_ylabel(ylabel)
+                    polish_axis(ax)
+                elif kind == "hist_hue":
+                    sns.histplot(
+                        data=data,
+                        x=feature,
+                        hue="pcos_label",
+                        hue_order=PCOS_LABEL_ORDER,
+                        palette=PCOS_LABEL_PALETTE,
+                        bins=24,
+                        stat="density",
+                        common_norm=False,
+                        multiple="layer",
+                        alpha=0.32,
+                        edgecolor="white",
+                        linewidth=0.7,
+                        ax=ax,
+                    )
+                    if log_scale:
+                        ax.set_xscale("log")
+                    ax.set_xlabel(ylabel)
+                    ax.set_ylabel("Density")
+                    polish_axis(ax)
+                else:
+                    sns.boxenplot(
+                        data=data,
+                        x="pcos_label",
+                        y=feature,
+                        order=PCOS_LABEL_ORDER,
+                        palette=PCOS_LABEL_PALETTE,
+                        linewidth=0.8,
+                        ax=ax,
+                    )
+                    if log_scale:
+                        ax.set_yscale("log")
+                    ax.set_xlabel("")
+                    ax.set_ylabel(ylabel)
+                    polish_axis(ax)
                 ax.set_title(title)
-                ax.set_xlabel("")
-                ax.set_ylabel(ylabel)
                 save_figure(fig, slug)
                 plt.show()
             """
@@ -1425,18 +1562,18 @@ def build_hormonal_notebook() -> list[dict]:
         code_cell(
             """
             # Plotting the target distribution is showing that the hormonal file mirrors the labeled portion of the main clinical cohort.
-            fig, ax = plt.subplots(figsize=(7, 5))
-            sns.barplot(
-                data=target_q01,
+            fig, ax = plt.subplots(figsize=(6.0, 4.0))
+            sns.countplot(
+                data=df,
                 x="pcos_label",
-                y="count",
                 order=PCOS_LABEL_ORDER,
                 palette=PCOS_LABEL_PALETTE,
                 ax=ax,
             )
-            ax.set_title("Question 1: Hormonal Sidecar Target Distribution")
+            ax.set_title("Hormonal Sidecar Target Distribution")
             ax.set_xlabel("")
             ax.set_ylabel("Participant Count")
+            polish_axis(ax)
             save_figure(fig, "q01_hormonal_target_distribution.png")
             plt.show()
             """
@@ -1451,12 +1588,12 @@ def build_hormonal_notebook() -> list[dict]:
     )
 
     hormonal_numeric_questions = [
-        (2, "How is AMH distributed across PCOS groups?", "amh_ng_ml", "AMH (ng/mL)", "q02_amh_vs_pcos.png", False, "AMH is showing a visibly higher central tendency in the PCOS-positive cohort, which is consistent with its well-known relevance in ovarian reserve and PCOS-related ovarian morphology. This makes AMH one of the strongest invasive candidates for later ablation-style comparison."),
-        (3, "How is beta-HCG I distributed across PCOS groups?", "beta_hcg_i_miu_ml", "Beta-hCG I (mIU/mL, log scale)", "q03_beta_hcg_i_vs_pcos.png", True, "Beta-hCG I is showing a very wide and highly skewed spread, with considerable overlap between the two groups. That heavy overlap is already suggesting that beta-hCG may be noisier and less clinically targeted for PCOS discrimination than AMH."),
-        (4, "How is beta-HCG II distributed across PCOS groups?", "beta_hcg_ii_miu_ml", "Beta-hCG II (mIU/mL, log scale)", "q04_beta_hcg_ii_vs_pcos.png", True, "Beta-hCG II is also showing substantial skew and wide overlap across the PCOS groups. This pattern is making it look more like a context variable with substantial noise than like a crisp discriminatory feature for later modeling."),
+        (2, "How is AMH distributed across PCOS groups?", "amh_ng_ml", "AMH (ng/mL)", "q02_amh_vs_pcos.png", "violin_strip", False, "AMH is showing a visibly higher central tendency in the PCOS-positive cohort, which is consistent with its well-known relevance in ovarian reserve and PCOS-related ovarian morphology. This makes AMH one of the strongest invasive candidates for later ablation-style comparison."),
+        (3, "How is beta-HCG I distributed across PCOS groups?", "beta_hcg_i_miu_ml", "Beta-hCG I (mIU/mL, log scale)", "q03_beta_hcg_i_vs_pcos.png", "hist_hue", True, "Beta-hCG I is showing a very wide and highly skewed spread, with considerable overlap between the two groups. That heavy overlap is already suggesting that beta-hCG may be noisier and less clinically targeted for PCOS discrimination than AMH."),
+        (4, "How is beta-HCG II distributed across PCOS groups?", "beta_hcg_ii_miu_ml", "Beta-hCG II (mIU/mL, log scale)", "q04_beta_hcg_ii_vs_pcos.png", "hist_hue", True, "Beta-hCG II is also showing substantial skew and wide overlap across the PCOS groups. This pattern is making it look more like a context variable with substantial noise than like a crisp discriminatory feature for later modeling."),
     ]
 
-    for number, question, feature, ylabel, slug, log_scale, insight in hormonal_numeric_questions:
+    for number, question, feature, ylabel, slug, kind, log_scale, insight in hormonal_numeric_questions:
         cells.append(question_markdown(number, question))
         cells.append(
             code_cell(
@@ -1475,8 +1612,9 @@ def build_hormonal_notebook() -> list[dict]:
                     data=df,
                     feature="{feature}",
                     ylabel="{ylabel}",
-                    title="Question {number}: {question}",
+                    title="{question}",
                     slug="{slug}",
+                    kind="{kind}",
                     log_scale={str(log_scale)},
                 )
                 """
@@ -1519,7 +1657,7 @@ def build_hormonal_notebook() -> list[dict]:
         code_cell(
             """
             # Plotting the effect sizes is showing which invasive marker is contributing the clearest group-level separation.
-            fig, ax = plt.subplots(figsize=(8, 5))
+            fig, ax = plt.subplots(figsize=(6.0, 4.0))
             sns.barplot(
                 data=summary_q05,
                 x="standardized_mean_difference",
@@ -1528,9 +1666,10 @@ def build_hormonal_notebook() -> list[dict]:
                 ax=ax,
             )
             ax.axvline(0, color="#333333", linewidth=1)
-            ax.set_title("Question 5: Standardized Mean Difference by Hormonal Marker")
+            ax.set_title("Standardized Mean Difference by Hormonal Marker")
             ax.set_xlabel("Standardized Mean Difference")
             ax.set_ylabel("Marker")
+            polish_axis(ax)
             save_figure(fig, "q05_hormonal_effect_sizes.png")
             plt.show()
             """
@@ -1566,7 +1705,7 @@ def build_hormonal_notebook() -> list[dict]:
         code_cell(
             """
             # Plotting the paired scatter is showing whether the two beta-hCG measures are largely moving together.
-            fig, ax = plt.subplots(figsize=(8, 6))
+            fig, ax = plt.subplots(figsize=(6.6, 4.6))
             sns.scatterplot(
                 data=df,
                 x="beta_hcg_i_miu_ml",
@@ -1575,15 +1714,16 @@ def build_hormonal_notebook() -> list[dict]:
                 hue_order=PCOS_LABEL_ORDER,
                 palette=PCOS_LABEL_PALETTE,
                 alpha=0.70,
-                s=65,
+                s=44,
                 ax=ax,
             )
             ax.set_xscale("log")
             ax.set_yscale("log")
-            ax.set_title("Question 6: Beta-hCG I versus Beta-hCG II")
+            ax.set_title("Beta-hCG I versus Beta-hCG II")
             ax.set_xlabel("Beta-hCG I (mIU/mL, log scale)")
             ax.set_ylabel("Beta-hCG II (mIU/mL, log scale)")
             ax.legend(title="")
+            polish_axis(ax, grid_axis="both")
             save_figure(fig, "q06_beta_hcg_pair_scatter.png")
             plt.show()
             """
@@ -1623,7 +1763,7 @@ def build_hormonal_notebook() -> list[dict]:
             code_cell(
                 f"""
                 # Plotting the pairwise scatter is showing whether the two markers are jointly separating the PCOS groups.
-                fig, ax = plt.subplots(figsize=(8, 6))
+                fig, ax = plt.subplots(figsize=(6.6, 4.6))
                 sns.scatterplot(
                     data=df,
                     x="{x_feature}",
@@ -1632,14 +1772,15 @@ def build_hormonal_notebook() -> list[dict]:
                     hue_order=PCOS_LABEL_ORDER,
                     palette=PCOS_LABEL_PALETTE,
                     alpha=0.70,
-                    s=65,
+                    s=44,
                     ax=ax,
                 )
                 ax.set_xscale("log")
-                ax.set_title("Question {number}: {question}")
+                ax.set_title("{question}")
                 ax.set_xlabel("{x_feature}")
                 ax.set_ylabel("{y_feature}")
                 ax.legend(title="")
+                polish_axis(ax, grid_axis="both")
                 save_figure(fig, "{slug}")
                 plt.show()
                 """
@@ -1665,7 +1806,7 @@ def build_hormonal_notebook() -> list[dict]:
         code_cell(
             """
             # Plotting the AMH versus beta-hCG I space is showing whether the classes separate or overlap in two dimensions.
-            fig, ax = plt.subplots(figsize=(8, 6))
+            fig, ax = plt.subplots(figsize=(6.6, 4.6))
             sns.scatterplot(
                 data=df,
                 x="beta_hcg_i_miu_ml",
@@ -1674,14 +1815,15 @@ def build_hormonal_notebook() -> list[dict]:
                 hue_order=PCOS_LABEL_ORDER,
                 palette=PCOS_LABEL_PALETTE,
                 alpha=0.70,
-                s=70,
+                s=46,
                 ax=ax,
             )
             ax.set_xscale("log")
-            ax.set_title("Question 9: AMH versus Beta-hCG I by PCOS Status")
+            ax.set_title("AMH versus Beta-hCG I by PCOS Status")
             ax.set_xlabel("Beta-hCG I (mIU/mL, log scale)")
             ax.set_ylabel("AMH (ng/mL)")
             ax.legend(title="")
+            polish_axis(ax, grid_axis="both")
             save_figure(fig, "q09_amh_beta_hcg_i_multivariate_scatter.png")
             plt.show()
             """
@@ -1735,19 +1877,21 @@ def build_hormonal_notebook() -> list[dict]:
         code_cell(
             """
             # Plotting the log-scale hormone densities is showing the extent of skew and tail behavior across markers.
-            fig, ax = plt.subplots(figsize=(9, 5))
-            sns.violinplot(
+            fig, ax = plt.subplots(figsize=(6.4, 4.2))
+            sns.kdeplot(
                 data=long_q10,
-                x="marker",
-                y="log_value",
-                palette=["#2a9d8f", "#e9c46a", "#6d597a"],
-                cut=0,
-                inner="quartile",
+                x="log_value",
+                hue="marker",
+                fill=True,
+                common_norm=False,
+                alpha=0.28,
+                linewidth=1.6,
                 ax=ax,
             )
-            ax.set_title("Question 10: Log-Scaled Hormone Distribution Shapes")
-            ax.set_xlabel("Marker")
-            ax.set_ylabel("log10(value + 1)")
+            ax.set_title("Log-Scaled Hormone Distribution Shapes")
+            ax.set_xlabel("Log-Scaled Marker Value")
+            ax.set_ylabel("Density")
+            polish_axis(ax)
             save_figure(fig, "q10_hormone_skewness_violin.png")
             plt.show()
             """
@@ -1784,7 +1928,7 @@ def build_hormonal_notebook() -> list[dict]:
         code_cell(
             """
             # Plotting the target-correlation ranking is showing which hormonal markers deserve to survive into later ablation experiments.
-            fig, ax = plt.subplots(figsize=(8, 4.5))
+            fig, ax = plt.subplots(figsize=(6.0, 4.0))
             sns.barplot(
                 data=summary_q11,
                 x="spearman_r",
@@ -1793,9 +1937,10 @@ def build_hormonal_notebook() -> list[dict]:
                 ax=ax,
             )
             ax.axvline(0, color="#333333", linewidth=1)
-            ax.set_title("Question 11: Hormonal Spearman Correlation with PCOS Status")
+            ax.set_title("Hormonal Spearman Correlation with PCOS Status")
             ax.set_xlabel("Spearman Correlation")
             ax.set_ylabel("Marker")
+            polish_axis(ax)
             save_figure(fig, "q11_hormonal_target_correlation.png")
             plt.show()
             """
@@ -1871,8 +2016,13 @@ def build_survey_notebook() -> list[dict]:
             np.random.seed(42)
 
             # Configuring the plotting theme is keeping the visuals consistent with the clinical and hormonal notebooks.
-            sns.set_theme(style="whitegrid", context="talk")
+            sns.set_theme(style="whitegrid", context="notebook")
             plt.rcParams["figure.dpi"] = 120
+            plt.rcParams["axes.titlesize"] = 12
+            plt.rcParams["axes.labelsize"] = 10
+            plt.rcParams["xtick.labelsize"] = 9
+            plt.rcParams["ytick.labelsize"] = 9
+            plt.rcParams["legend.fontsize"] = 9
             pd.set_option("display.max_columns", None)
 
             # Resolving the project root is keeping the notebook portable across launch locations.
@@ -1900,6 +2050,10 @@ def build_survey_notebook() -> list[dict]:
                 fig.savefig(output_path, dpi=300, bbox_inches="tight")
                 return output_path
 
+            def polish_axis(ax: plt.Axes, grid_axis: str = "y") -> None:
+                sns.despine(ax=ax, trim=True)
+                ax.grid(axis=grid_axis, alpha=0.18, linewidth=0.7)
+
             def grouped_numeric_summary(data: pd.DataFrame, feature: str) -> pd.DataFrame:
                 return (
                     data.groupby("pcos_label")[feature]
@@ -1925,10 +2079,12 @@ def build_survey_notebook() -> list[dict]:
                 ylabel: str,
                 title: str,
                 slug: str,
-                kind: str = "box",
+                kind: str = "boxen_strip",
+                figsize: tuple[float, float] = (6.2, 4.0),
+                discrete: bool = False,
             ) -> None:
-                fig, ax = plt.subplots(figsize=(8, 5))
-                if kind == "violin":
+                fig, ax = plt.subplots(figsize=figsize)
+                if kind == "violin_strip":
                     sns.violinplot(
                         data=data,
                         x="pcos_label",
@@ -1937,6 +2093,7 @@ def build_survey_notebook() -> list[dict]:
                         palette=PCOS_LABEL_PALETTE,
                         cut=0,
                         inner=None,
+                        linewidth=0.8,
                         ax=ax,
                     )
                     sns.stripplot(
@@ -1950,13 +2107,17 @@ def build_survey_notebook() -> list[dict]:
                         jitter=0.20,
                         ax=ax,
                     )
-                else:
-                    sns.boxplot(
+                    ax.set_xlabel("")
+                    ax.set_ylabel(ylabel)
+                    polish_axis(ax)
+                elif kind == "boxen_strip":
+                    sns.boxenplot(
                         data=data,
                         x="pcos_label",
                         y=feature,
                         order=PCOS_LABEL_ORDER,
                         palette=PCOS_LABEL_PALETTE,
+                        linewidth=0.8,
                         ax=ax,
                     )
                     sns.stripplot(
@@ -1964,26 +2125,77 @@ def build_survey_notebook() -> list[dict]:
                         x="pcos_label",
                         y=feature,
                         order=PCOS_LABEL_ORDER,
-                        color="#264653",
-                        alpha=0.30,
-                        size=3,
-                        jitter=0.20,
+                        color="#334155",
+                        alpha=0.20,
+                        size=2.6,
+                        jitter=0.16,
                         ax=ax,
                     )
+                    ax.set_xlabel("")
+                    ax.set_ylabel(ylabel)
+                    polish_axis(ax)
+                elif kind == "hist_hue":
+                    sns.histplot(
+                        data=data,
+                        x=feature,
+                        hue="pcos_label",
+                        hue_order=PCOS_LABEL_ORDER,
+                        palette=PCOS_LABEL_PALETTE,
+                        bins=None if discrete else 20,
+                        discrete=discrete,
+                        stat="density",
+                        common_norm=False,
+                        multiple="dodge" if discrete else "layer",
+                        alpha=0.32,
+                        edgecolor="white",
+                        linewidth=0.7,
+                        ax=ax,
+                    )
+                    ax.set_xlabel(ylabel)
+                    ax.set_ylabel("Density")
+                    polish_axis(ax)
+                elif kind == "ecdf_hue":
+                    for label in PCOS_LABEL_ORDER:
+                        subset = data.loc[data["pcos_label"] == label, feature].dropna()
+                        sns.ecdfplot(
+                            subset,
+                            label=label,
+                            color=PCOS_LABEL_PALETTE[label],
+                            linewidth=2,
+                            ax=ax,
+                        )
+                    ax.legend(frameon=True, title="")
+                    ax.set_xlabel(ylabel)
+                    ax.set_ylabel("Cumulative Proportion")
+                    polish_axis(ax, grid_axis="both")
+                else:
+                    sns.violinplot(
+                        data=data,
+                        x="pcos_label",
+                        y=feature,
+                        order=PCOS_LABEL_ORDER,
+                        palette=PCOS_LABEL_PALETTE,
+                        cut=0,
+                        inner="quartile",
+                        linewidth=0.8,
+                        ax=ax,
+                    )
+                    ax.set_xlabel("")
+                    ax.set_ylabel(ylabel)
+                    polish_axis(ax)
                 ax.set_title(title)
-                ax.set_xlabel("")
-                ax.set_ylabel(ylabel)
                 save_figure(fig, slug)
                 plt.show()
 
             def plot_binary_prevalence(summary: pd.DataFrame, title: str, slug: str) -> None:
-                fig, ax = plt.subplots(figsize=(7, 5))
+                fig, ax = plt.subplots(figsize=(6.0, 4.0))
                 sns.barplot(
                     data=summary,
                     x="pcos_label",
                     y="prevalence_pct",
                     order=PCOS_LABEL_ORDER,
                     palette=PCOS_LABEL_PALETTE,
+                    saturation=0.88,
                     ax=ax,
                 )
                 for patch in ax.patches:
@@ -2000,6 +2212,7 @@ def build_survey_notebook() -> list[dict]:
                 ax.set_title(title)
                 ax.set_xlabel("")
                 ax.set_ylabel("Prevalence (%)")
+                polish_axis(ax)
                 save_figure(fig, slug)
                 plt.show()
             """
@@ -2115,18 +2328,18 @@ def build_survey_notebook() -> list[dict]:
         code_cell(
             """
             # Plotting the survey target distribution is showing the class balance that later external-style validation will inherit.
-            fig, ax = plt.subplots(figsize=(7, 5))
-            sns.barplot(
-                data=target_q01,
+            fig, ax = plt.subplots(figsize=(6.0, 4.0))
+            sns.countplot(
+                data=df,
                 x="pcos_label",
-                y="count",
                 order=PCOS_LABEL_ORDER,
                 palette=PCOS_LABEL_PALETTE,
                 ax=ax,
             )
-            ax.set_title("Question 1: Survey Target Distribution")
+            ax.set_title("Survey Target Distribution")
             ax.set_xlabel("")
             ax.set_ylabel("Participant Count")
+            polish_axis(ax)
             save_figure(fig, "q01_survey_target_distribution.png")
             plt.show()
             """
@@ -2141,12 +2354,12 @@ def build_survey_notebook() -> list[dict]:
     )
 
     numeric_survey_questions = [
-        (2, "Does age differ by survey PCOS status?", "age_yrs", "Age (years)", "q02_age_vs_pcos_survey.png", "Age is showing only limited separation across the survey target groups, which is suggesting that age is more likely to behave as a contextual feature than as a dominant self-reported signal."),
-        (3, "Does BMI differ by survey PCOS status?", "bmi", "Body Mass Index", "q03_bmi_vs_pcos_survey.png", "BMI is showing a meaningful upward shift in the survey PCOS-positive group, which is directionally consistent with the clinical notebook. This matters because it suggests that adiposity-related signal is surviving even in a noisier self-reported dataset."),
-        (5, "Does cycle-length behavior differ by survey PCOS status?", "cycle_length_days", "Estimated Cycle Length (days)", "q05_cycle_length_vs_pcos_survey.png", "The estimated cycle-length feature is showing a strong upward shift in the survey PCOS-positive group. That pattern is clinically important because longer or more disrupted cycles are central to PCOS screening and remain visible even in self-reported data."),
-        (6, "Do months between periods differ by survey PCOS status?", "months_between_periods", "Months Between Periods", "q06_months_between_periods_vs_pcos.png", "Months between periods is showing a clear upward shift among survey participants who report PCOS. This reinforces the same menstrual-disruption story seen in the clinical notebook, even though the survey variable is coarser and self-reported."),
-        (7, "Does period duration differ by survey PCOS status?", "period_duration_days", "Period Duration (days)", "q07_period_duration_vs_pcos.png", "Period duration is showing a more modest shift than cycle spacing, which suggests that timing irregularity may be more informative than duration alone in this self-reported cohort."),
-        (16, "Does a simple non-invasive burden score differ by survey PCOS status?", "non_invasive_burden_score", "Non-Invasive Burden Score", "q16_survey_burden_score.png", "The burden score is showing whether multiple self-reported symptoms and behavior signals are stacking together inside the survey PCOS-positive group. A clear upward shift would support the idea that the non-invasive phenotype remains visible even when the data source is noisier."),
+        (2, "Does age differ by survey PCOS status?", "age_yrs", "Age (years)", "q02_age_vs_pcos_survey.png", "violin_strip", "Age is showing only limited separation across the survey target groups, which is suggesting that age is more likely to behave as a contextual feature than as a dominant self-reported signal."),
+        (3, "Does BMI differ by survey PCOS status?", "bmi", "Body Mass Index", "q03_bmi_vs_pcos_survey.png", "violin_strip", "BMI is showing a meaningful upward shift in the survey PCOS-positive group, which is directionally consistent with the clinical notebook. This matters because it suggests that adiposity-related signal is surviving even in a noisier self-reported dataset."),
+        (5, "Does cycle-length behavior differ by survey PCOS status?", "cycle_length_days", "Estimated Cycle Length (days)", "q05_cycle_length_vs_pcos_survey.png", "boxen_strip", "The estimated cycle-length feature is showing a strong upward shift in the survey PCOS-positive group. That pattern is clinically important because longer or more disrupted cycles are central to PCOS screening and remain visible even in self-reported data."),
+        (6, "Do months between periods differ by survey PCOS status?", "months_between_periods", "Months Between Periods", "q06_months_between_periods_vs_pcos.png", "ecdf_hue", "Months between periods is showing a clear upward shift among survey participants who report PCOS. This reinforces the same menstrual-disruption story seen in the clinical notebook, even though the survey variable is coarser and self-reported."),
+        (7, "Does period duration differ by survey PCOS status?", "period_duration_days", "Period Duration (days)", "q07_period_duration_vs_pcos.png", "boxen_strip", "Period duration is showing a more modest shift than cycle spacing, which suggests that timing irregularity may be more informative than duration alone in this self-reported cohort."),
+        (16, "Does a simple non-invasive burden score differ by survey PCOS status?", "non_invasive_burden_score", "Non-Invasive Burden Score", "q16_survey_burden_score.png", "hist_hue", "The burden score is showing whether multiple self-reported symptoms and behavior signals are stacking together inside the survey PCOS-positive group. A clear upward shift would support the idea that the non-invasive phenotype remains visible even when the data source is noisier."),
     ]
 
     cells.append(question_markdown(2, "Does age differ by survey PCOS status?"))
@@ -2167,9 +2380,9 @@ def build_survey_notebook() -> list[dict]:
                 data=df,
                 feature="age_yrs",
                 ylabel="Age (years)",
-                title="Question 2: Survey Age by PCOS Status",
+                title="Survey Age by PCOS Status",
                 slug="q02_age_vs_pcos_survey.png",
-                kind="box",
+                kind="violin_strip",
             )
             """
         )
@@ -2194,9 +2407,9 @@ def build_survey_notebook() -> list[dict]:
                 data=df,
                 feature="bmi",
                 ylabel="Body Mass Index",
-                title="Question 3: Survey BMI by PCOS Status",
+                title="Survey BMI by PCOS Status",
                 slug="q03_bmi_vs_pcos_survey.png",
-                kind="box",
+                kind="violin_strip",
             )
             """
         )
@@ -2219,7 +2432,7 @@ def build_survey_notebook() -> list[dict]:
             # Plotting the cycle-regularity prevalence is showing how strongly menstrual disruption is separating the survey groups.
             plot_binary_prevalence(
                 summary=summary_q04,
-                title="Question 4: Regular Cycle Prevalence by Survey PCOS Status",
+                title="Regular Cycle Prevalence by Survey PCOS Status",
                 slug="q04_cycle_regularity_prevalence.png",
             )
             """
@@ -2227,7 +2440,7 @@ def build_survey_notebook() -> list[dict]:
     )
     cells.append(insight_markdown("Regular-cycle prevalence is dropping sharply in the survey PCOS-positive group, which is providing one of the strongest self-reported signals in the dataset. This is clinically important because menstrual irregularity remains central to low-burden PCOS screening."))
 
-    for number, question, feature, ylabel, slug, insight in numeric_survey_questions[2:5]:
+    for number, question, feature, ylabel, slug, kind, insight in numeric_survey_questions[2:5]:
         cells.append(question_markdown(number, question))
         cells.append(
             code_cell(
@@ -2246,9 +2459,9 @@ def build_survey_notebook() -> list[dict]:
                     data=df,
                     feature="{feature}",
                     ylabel="{ylabel}",
-                    title="Question {number}: {question}",
+                    title="{question}",
                     slug="{slug}",
-                    kind="box",
+                    kind="{kind}",
                 )
                 """
             )
@@ -2283,7 +2496,7 @@ def build_survey_notebook() -> list[dict]:
                 # Plotting the grouped prevalence is showing whether `{feature}` is concentrating in the positive survey cohort.
                 plot_binary_prevalence(
                     summary=summary_q{number:02d},
-                    title="Question {number}: {label} Prevalence by Survey PCOS Status",
+                    title="{label} Prevalence by Survey PCOS Status",
                     slug="{slug}",
                 )
                 """
@@ -2316,9 +2529,10 @@ def build_survey_notebook() -> list[dict]:
                 data=df,
                 feature="non_invasive_burden_score",
                 ylabel="Non-Invasive Burden Score",
-                title="Question 16: Survey Non-Invasive Burden Score by PCOS Status",
+                title="Survey Non-Invasive Burden Score by PCOS Status",
                 slug="q16_survey_burden_score.png",
-                kind="violin",
+                kind="hist_hue",
+                discrete=True,
             )
             """
         )
