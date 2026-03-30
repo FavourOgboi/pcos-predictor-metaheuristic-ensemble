@@ -240,7 +240,7 @@ def render_sidebar() -> None:
             unsafe_allow_html=True,
         )
         st.markdown("<hr style='border-color:rgba(255,255,255,0.15);'>", unsafe_allow_html=True)
-        st.page_link("main.py", label="🏠 Home")
+        st.page_link("pages/01_home.py", label="🏠 Home")
         st.markdown("<div class='nav-label'>Screening Tools</div>", unsafe_allow_html=True)
         st.page_link("pages/02_noninvasive_screening.py", label="🟢 Non-Invasive Screening")
         st.page_link("pages/03_invasive_benchmark.py", label="🔵 Clinical Benchmark")
