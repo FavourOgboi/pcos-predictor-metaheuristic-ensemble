@@ -1,0 +1,13 @@
+model,accuracy,precision,recall,f1,auc,model_set,algorithm,approach
+Model 1 - LR,0.8349,0.7368,0.7778,0.7568,0.8839,Model 1,LR,Individual
+Model 1 - RF,0.8532,0.8125,0.7222,0.7647,0.9098,Model 1,RF,Individual
+Model 1 - XGB,0.8716,0.8438,0.75,0.7941,0.9026,Model 1,XGB,Individual
+Model 2 - LR,0.8349,0.7143,0.8333,0.7692,0.8988,Model 2,LR,Individual
+Model 2 - RF,0.8349,0.75,0.75,0.75,0.8955,Model 2,RF,Individual
+Model 2 - XGB,0.8624,0.8,0.7778,0.7887,0.9037,Model 2,XGB,Individual
+Model 1 - Stack-LR,0.844,0.7879,0.7222,0.7536,0.9113,Model 1,Stack-LR,Stacking
+Model 1 - Stack-RF,0.844,0.8276,0.6667,0.7385,0.8777,Model 1,Stack-RF,Stacking
+Model 1 - Stack-XGB,0.8257,0.8148,0.6111,0.6984,0.8809,Model 1,Stack-XGB,Stacking
+Model 2 - Stack-LR,0.8899,0.8529,0.8056,0.8286,0.9037,Model 2,Stack-LR,Stacking
+Model 2 - Stack-RF,0.8257,0.7742,0.6667,0.7164,0.8969,Model 2,Stack-RF,Stacking
+Model 2 - Stack-XGB,0.8807,0.871,0.75,0.806,0.8874,Model 2,Stack-XGB,Stacking

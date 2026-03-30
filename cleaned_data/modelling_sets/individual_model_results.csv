@@ -1,0 +1,7 @@
+model,accuracy,precision,recall,f1,auc,model_set,algorithm
+Model 1 - LR,0.8349,0.7368,0.7778,0.7568,0.8839,Model 1,LR
+Model 1 - RF,0.8532,0.8125,0.7222,0.7647,0.9098,Model 1,RF
+Model 1 - XGB,0.8716,0.8438,0.75,0.7941,0.9026,Model 1,XGB
+Model 2 - LR,0.8349,0.7143,0.8333,0.7692,0.8988,Model 2,LR
+Model 2 - RF,0.8349,0.75,0.75,0.75,0.8955,Model 2,RF
+Model 2 - XGB,0.8624,0.8,0.7778,0.7887,0.9037,Model 2,XGB

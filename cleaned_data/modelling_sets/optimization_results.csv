@@ -1,0 +1,7 @@
+model,accuracy,precision,recall,f1,auc,approach,model_set,optimizer,algorithm
+Model 1 - WaO Optimized,0.8716,0.8235,0.7778,0.8,0.8988,Optimized,Model 1,WaO,Optimized
+Model 1 - RSO Optimized,0.8624,0.8182,0.75,0.7826,0.9102,Optimized,Model 1,RSO,Optimized
+Model 1 - CSO Optimized,0.8624,0.8387,0.7222,0.7761,0.9132,Optimized,Model 1,CSO,Optimized
+Model 2 - WaO Optimized,0.8716,0.8235,0.7778,0.8,0.9068,Optimized,Model 2,WaO,Optimized
+Model 2 - RSO Optimized,0.8716,0.8235,0.7778,0.8,0.9072,Optimized,Model 2,RSO,Optimized
+Model 2 - CSO Optimized,0.8716,0.8056,0.8056,0.8056,0.9064,Optimized,Model 2,CSO,Optimized

@@ -1,0 +1,16 @@
+{
+  "optimizer": "CSO",
+  "stack_family": "lr",
+  "auc": 0.95475221185433,
+  "params": {
+    "rf_n_estimators": 479.0,
+    "rf_max_depth": 20.0,
+    "rf_min_samples_split": 2.0,
+    "xgb_n_estimators": 400.0,
+    "xgb_learning_rate": 0.01,
+    "xgb_max_depth": 2.0,
+    "xgb_subsample": 1.0,
+    "meta_C": 10.0,
+    "meta_n_estimators": 300.0
+  }
+}
