@@ -1,6 +1,6 @@
 import streamlit as st
 
-from config.app_config import APP_META
+from app.config.app_config import APP_META
 
 
 def _nonempty_lines(*values: str) -> str:

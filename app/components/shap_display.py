@@ -4,7 +4,7 @@ from typing import Dict, List
 import pandas as pd
 import streamlit as st
 
-from config.app_config import FEATURE_MEANINGS_M1, FEATURE_MEANINGS_M2
+from app.config.app_config import FEATURE_MEANINGS_M1, FEATURE_MEANINGS_M2
 
 
 def show_image_or_placeholder(path: Path, caption: str) -> None:

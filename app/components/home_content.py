@@ -1,8 +1,8 @@
 import streamlit as st
 
-from components.styling import render_metric_card, render_section_card
-from components.utils import best_individual_rows, best_model_rows, get_metric_deltas, load_dataframe
-from config.app_config import DATASET_SUMMARY
+from app.components.styling import render_metric_card, render_section_card
+from app.components.utils import best_individual_rows, best_model_rows, get_metric_deltas, load_dataframe
+from app.config.app_config import DATASET_SUMMARY
 
 
 def render_home_page() -> None:

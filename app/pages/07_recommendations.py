@@ -1,7 +1,7 @@
 import streamlit as st
 
-from components.styling import apply_global_styles, configure_page, render_footer, render_sidebar
-from components.utils import best_model_rows, load_dataframe
+from app.components.styling import apply_global_styles, configure_page, render_footer, render_sidebar
+from app.components.utils import best_model_rows, load_dataframe
 
 
 configure_page("Recommendations", "💡")

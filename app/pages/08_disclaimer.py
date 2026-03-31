@@ -1,6 +1,6 @@
 import streamlit as st
 
-from components.styling import apply_global_styles, configure_page, render_footer, render_sidebar, render_warning_banner
+from app.components.styling import apply_global_styles, configure_page, render_footer, render_sidebar, render_warning_banner
 
 
 configure_page("Disclaimer", "⚠️")

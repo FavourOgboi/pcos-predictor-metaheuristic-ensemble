@@ -2,7 +2,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from components.charts import (
+from app.components.charts import (
     age_histogram,
     apply_plotly_style,
     bmi_boxplot,
@@ -13,7 +13,7 @@ from components.charts import (
     selected_feature_histogram,
     symptom_prevalence_chart,
 )
-from components.styling import (
+from app.components.styling import (
     apply_global_styles,
     configure_page,
     render_footer,
@@ -21,7 +21,7 @@ from components.styling import (
     render_section_card,
     render_sidebar,
 )
-from components.utils import load_dataframe
+from app.components.utils import load_dataframe
 
 
 configure_page("PCOS Insights Dashboard", "📊")

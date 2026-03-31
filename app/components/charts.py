@@ -2,7 +2,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-from config.app_config import COLOR_SCHEME
+from app.config.app_config import COLOR_SCHEME
 
 
 def apply_plotly_style(fig: go.Figure, title: str = "") -> go.Figure:

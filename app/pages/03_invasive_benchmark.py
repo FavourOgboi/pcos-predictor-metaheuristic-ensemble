@@ -1,7 +1,7 @@
 import streamlit as st
 
-from components.shap_display import render_patient_reason_summary, render_shap_section
-from components.styling import (
+from app.components.shap_display import render_patient_reason_summary, render_shap_section
+from app.components.styling import (
     apply_global_styles,
     configure_page,
     render_footer,
@@ -9,7 +9,7 @@ from components.styling import (
     render_metric_card,
     render_sidebar,
 )
-from components.utils import (
+from app.components.utils import (
     bundle_predict,
     build_text_report,
     compute_model2_features,
@@ -20,7 +20,7 @@ from components.utils import (
     model2_input_summary,
     risk_band,
 )
-from config.app_config import IMAGE_PATHS
+from app.config.app_config import IMAGE_PATHS
 
 
 def render_badge(label: str, css_class: str, helper_text: str) -> None:

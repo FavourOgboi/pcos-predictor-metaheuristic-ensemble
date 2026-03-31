@@ -1,10 +1,10 @@
 import pandas as pd
 import streamlit as st
 
-from components.shap_display import show_image_or_placeholder
-from components.styling import apply_global_styles, configure_page, render_footer, render_section_card, render_sidebar
-from components.utils import best_individual_rows, best_model_rows, load_dataframe
-from config.app_config import IMAGE_PATHS
+from app.components.shap_display import show_image_or_placeholder
+from app.components.styling import apply_global_styles, configure_page, render_footer, render_section_card, render_sidebar
+from app.components.utils import best_individual_rows, best_model_rows, load_dataframe
+from app.config.app_config import IMAGE_PATHS
 
 
 configure_page("Model Performance", "📈")

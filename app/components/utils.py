@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-from config.app_config import (
+from app.config.app_config import (
     COLOR_SCHEME,
     DATA_PATHS,
     FEATURE_MEANINGS_M1,

@@ -2,8 +2,8 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from components.charts import apply_plotly_style, overlapping_histogram
-from components.styling import (
+from app.components.charts import apply_plotly_style, overlapping_histogram
+from app.components.styling import (
     apply_global_styles,
     configure_page,
     render_footer,
@@ -12,7 +12,7 @@ from components.styling import (
     render_sidebar,
     render_warning_banner,
 )
-from components.utils import load_dataframe
+from app.components.utils import load_dataframe
 
 
 configure_page("Heart & PCOS Study", "❤️")
