@@ -22,7 +22,15 @@ from app.config.app_config import (
 
 @st.cache_data(show_spinner=False)
 def load_dataframe(path_key: str) -> pd.DataFrame:
-    return pd.read_csv(DATA_PATHS[path_key])
+    try:
+        path = DATA_PATHS.get(path_key)
+        if path is None:
+            raise KeyError(f"Data path key '{path_key}' not found in DATA_PATHS")
+        if not path.exists():
+            raise FileNotFoundError(f"Data file not found at: {path}")
+        return pd.read_csv(path)
+    except Exception as e:
+        raise Exception(f"Failed to load dataframe '{path_key}': {e}")
 
 
 @st.cache_data(show_spinner=False)
@@ -33,12 +41,28 @@ def load_json_data(path: Path) -> Dict:
 
 @st.cache_resource(show_spinner=False)
 def load_model_bundle(bundle_key: str) -> Dict:
-    return joblib.load(MODEL_PATHS[bundle_key])
+    try:
+        path = MODEL_PATHS.get(bundle_key)
+        if path is None:
+            raise KeyError(f"Model path key '{bundle_key}' not found in MODEL_PATHS")
+        if not path.exists():
+            raise FileNotFoundError(f"Model file not found at: {path}")
+        return joblib.load(path)
+    except Exception as e:
+        raise Exception(f"Failed to load model bundle '{bundle_key}': {e}")
 
 
 @st.cache_resource(show_spinner=False)
 def load_scaler(scaler_key: str):
-    return joblib.load(MODEL_PATHS[scaler_key])
+    try:
+        path = MODEL_PATHS.get(scaler_key)
+        if path is None:
+            raise KeyError(f"Scaler path key '{scaler_key}' not found in MODEL_PATHS")
+        if not path.exists():
+            raise FileNotFoundError(f"Scaler file not found at: {path}")
+        return joblib.load(path)
+    except Exception as e:
+        raise Exception(f"Failed to load scaler '{scaler_key}': {e}")
 
 
 def bmi_to_category(bmi: float) -> int:
