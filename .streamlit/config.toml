@@ -9,6 +9,15 @@ font = "sans serif"
 [server]
 port = 8501
 headless = true
+runOnSave = true
 
 [browser]
 gatherUsageStats = false
+serverAddress = "0.0.0.0"
+
+[client]
+toolbarMode = "minimal"
+showErrorDetails = true
+
+[logger]
+level = "error"
