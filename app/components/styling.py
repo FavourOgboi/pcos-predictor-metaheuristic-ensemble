@@ -218,12 +218,23 @@ def apply_global_styles() -> None:
     )
 
 
-def render_sidebar() -> None:
+def render_sidebar() -> str:
+    def nav_button(route_key: str, label: str, icon: str, current_route: str) -> str:
+        if st.button(
+            f"{icon} {label}",
+            key=f"nav_{route_key}",
+            use_container_width=True,
+            type="primary" if current_route == route_key else "secondary",
+        ):
+            return route_key
+        return current_route
+
     identity_lines = _nonempty_lines(
         APP_META["researcher"],
         APP_META["degree"],
         APP_META["institution"],
     )
+    current_route = st.session_state.get("route", "home")
     with st.sidebar:
         st.markdown(
             """
@@ -240,18 +251,18 @@ def render_sidebar() -> None:
             unsafe_allow_html=True,
         )
         st.markdown("<hr style='border-color:rgba(255,255,255,0.15);'>", unsafe_allow_html=True)
-        st.page_link("pages/01_home.py", label="🏠 Home")
+        current_route = nav_button("home", "Home", "🏠", current_route)
         st.markdown("<div class='nav-label'>Screening Tools</div>", unsafe_allow_html=True)
-        st.page_link("pages/02_noninvasive_screening.py", label="🟢 Non-Invasive Screening")
-        st.page_link("pages/03_invasive_benchmark.py", label="🔵 Clinical Benchmark")
+        current_route = nav_button("noninvasive", "Non-Invasive Screening", "🟢", current_route)
+        current_route = nav_button("invasive", "Clinical Benchmark", "🔵", current_route)
         st.markdown("<div class='nav-label'>Research Insights</div>", unsafe_allow_html=True)
-        st.page_link("pages/04_insights_dashboard.py", label="📊 PCOS Insights Dashboard")
-        st.page_link("pages/05_heart_pcos_study.py", label="❤️ Heart & PCOS Study")
+        current_route = nav_button("insights", "PCOS Insights Dashboard", "📊", current_route)
+        current_route = nav_button("heart", "Heart & PCOS Study", "❤️", current_route)
         st.markdown("<div class='nav-label'>Model Science</div>", unsafe_allow_html=True)
-        st.page_link("pages/06_model_performance.py", label="📈 Model Performance")
+        current_route = nav_button("performance", "Model Performance", "📈", current_route)
         st.markdown("<div class='nav-label'>Information</div>", unsafe_allow_html=True)
-        st.page_link("pages/07_recommendations.py", label="💡 Recommendations")
-        st.page_link("pages/08_disclaimer.py", label="⚠️ Disclaimer")
+        current_route = nav_button("recommendations", "Recommendations", "💡", current_route)
+        current_route = nav_button("disclaimer", "Disclaimer", "⚠️", current_route)
         st.markdown("<hr style='border-color:rgba(255,255,255,0.15);'>", unsafe_allow_html=True)
         st.markdown(
             f"""
@@ -261,6 +272,8 @@ def render_sidebar() -> None:
             """,
             unsafe_allow_html=True,
         )
+    st.session_state["route"] = current_route
+    return current_route
 
 
 def render_footer() -> None:
