@@ -7,15 +7,6 @@ def _nonempty_lines(*values: str) -> str:
     return "<br>\n                ".join(value for value in values if value)
 
 
-def configure_page(page_title: str, page_icon: str = "🔬") -> None:
-    st.set_page_config(
-        page_title=page_title,
-        page_icon=page_icon,
-        layout="wide",
-        initial_sidebar_state="expanded",
-    )
-
-
 def apply_global_styles() -> None:
     st.markdown(
         """
