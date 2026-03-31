@@ -15,52 +15,72 @@ def render() -> None:
         unsafe_allow_html=True,
     )
 
-    final_results = load_dataframe("final_results")
-    best_rows = best_model_rows(final_results)
-    non_invasive_auc = best_rows["Model 1"]["auc"] * 100
+    try:
+        final_results = load_dataframe("final_results")
+        best_rows = best_model_rows(final_results)
+        non_invasive_auc = best_rows["Model 1"]["auc"] * 100
+        data_available = True
+    except Exception as e:
+        st.warning(f"⚠️ Model results data not available: {str(e)}")
+        data_available = False
+        non_invasive_auc = None
 
-    cards = [
-        (
-            "For Women (Self-Screening)",
-            "Preventive",
-            "If you experience irregular periods combined with unexplained weight gain, excess hair growth, or skin darkening, you may be at elevated PCOS risk. Use the Non-Invasive Screening Tool on this platform as a first step. This tool does not replace clinical diagnosis, but it can help you decide whether to seek professional evaluation. Early screening allows earlier intervention.",
-        ),
-        (
-            "For Primary Care Clinicians",
-            "Clinical Action",
-            f"Patients presenting with BMI above 25, menstrual cycles longer than 35 days or clearly irregular timing, and any two additional symptoms such as hirsutism, skin darkening, or acne should be considered for PCOS evaluation. This study shows that these non-invasive markers alone can achieve about {non_invasive_auc:.1f}% AUC in separating PCOS from non-PCOS patients. Referral for hormonal testing is recommended for high-risk screening results.",
-        ),
-        (
-            "For Resource-Limited Settings",
-            "Public Health",
-            "In settings where laboratory testing and ultrasound are unavailable, the Non-Invasive Model provides a validated screening framework requiring only age, BMI, blood pressure, menstrual cycle information, and symptom presence. This study shows that this reduced data still reaches clinically meaningful performance. Community health workers can use this as a structured checklist.",
-        ),
-        (
-            "Lifestyle Interventions",
-            "Modifiable Risk",
-            "This study identified fast food intake and low exercise as contributors to the lifestyle risk score. Both are modifiable. Regular exercise and better diet quality remain strong first-line interventions for PCOS management and for reducing cardiometabolic strain.",
-        ),
-        (
-            "Future Research Directions",
-            "Research",
-            "Future work can include external validation on an independent clinical cohort, longitudinal risk tracking, federated learning across hospitals, wearable-device integration, and a mobile app for community-level self-screening.",
-        ),
-    ]
+    if data_available:
+        cards = [
+            (
+                "For Women (Self-Screening)",
+                "Preventive",
+                "If you experience irregular periods combined with unexplained weight gain, excess hair growth, or skin darkening, you may be at elevated PCOS risk. Use the Non-Invasive Screening Tool on this platform as a first step. This tool does not replace clinical diagnosis, but it can help you decide whether to seek professional evaluation. Early screening allows earlier intervention.",
+            ),
+            (
+                "For Primary Care Clinicians",
+                "Clinical Action",
+                f"Patients presenting with BMI above 25, menstrual cycles longer than 35 days or clearly irregular timing, and any two additional symptoms such as hirsutism, skin darkening, or acne should be considered for PCOS evaluation. This study shows that these non-invasive markers alone can achieve about {non_invasive_auc:.1f}% AUC in separating PCOS from non-PCOS patients. Referral for hormonal testing is recommended for high-risk screening results.",
+            ),
+            (
+                "For Resource-Limited Settings",
+                "Public Health",
+                "In settings where laboratory testing and ultrasound are unavailable, the Non-Invasive Model provides a validated screening framework requiring only age, BMI, blood pressure, menstrual cycle information, and symptom presence. This study shows that this reduced data still reaches clinically meaningful performance. Community health workers can use this as a structured checklist.",
+            ),
+            (
+                "Lifestyle Interventions",
+                "Modifiable Risk",
+                "This study identified fast food intake and low exercise as contributors to the lifestyle risk score. Both are modifiable. Regular exercise and better diet quality remain strong first-line interventions for PCOS management and for reducing cardiometabolic strain.",
+            ),
+            (
+                "Future Research Directions",
+                "Research",
+                "Future work can include external validation on an independent clinical cohort, longitudinal risk tracking, federated learning across hospitals, wearable-device integration, and a mobile app for community-level self-screening.",
+            ),
+        ]
 
-    icons = ["👩", "🩺", "🌍", "🥗", "🔭"]
-    for icon, (title, badge, body) in zip(icons, cards):
-        st.markdown(
-            f"""
-            <div class='section-card'>
-                <div style='display:flex; justify-content:space-between; align-items:center;'>
-                    <div style='font-size:1.4rem; font-weight:700;'>{icon} {title}</div>
-                    <div style='background:#EBF4FF; color:#1B4F8A; border-radius:999px; padding:0.35rem 0.8rem; font-size:0.8rem; font-weight:700;'>{badge}</div>
+        icons = ["👩", "🩺", "🌍", "🥗", "🔭"]
+        for icon, (title, badge, body) in zip(icons, cards):
+            st.markdown(
+                f"""
+                <div class='section-card'>
+                    <div style='display:flex; justify-content:space-between; align-items:center;'>
+                        <div style='font-size:1.4rem; font-weight:700;'>{icon} {title}</div>
+                        <div style='background:#EBF4FF; color:#1B4F8A; border-radius:999px; padding:0.35rem 0.8rem; font-size:0.8rem; font-weight:700;'>{badge}</div>
+                    </div>
+                    <p style='margin-top:1rem; color:#40566F; line-height:1.8;'>{body}</p>
                 </div>
-                <p style='margin-top:1rem; color:#40566F; line-height:1.8;'>{body}</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+                """,
+                unsafe_allow_html=True,
+            )
+    else:
+        st.info("💡 Generic Recommendations (Data Not Available)")
+        st.markdown("""
+        Since detailed model metrics are not available, here are general evidence-based PCOS screening recommendations:
+        
+        **For Self-Screening:** Irregular periods, weight gain, excess hair growth, or skin darkening may indicate PCOS risk.
+        
+        **For Clinicians:** Evaluate patients with BMI >25, irregular/long cycles, and additional symptoms for PCOS testing.
+        
+        **In Resource-Limited Settings:** Use age, BMI, blood pressure, menstrual history, and symptom presence for initial screening.
+        
+        **Lifestyle:** Exercise and diet quality are essential first-line interventions for PCOS management.
+        """)
 
     render_section_card(
         "Supporting References",

@@ -6,9 +6,17 @@ from app.config.app_config import DATASET_SUMMARY
 
 
 def render_home_page() -> None:
-    final_results = load_dataframe("final_results")
-    best_rows = best_model_rows(final_results)
-    deltas = get_metric_deltas(final_results)
+    # Try to load results data, but show a fallback if unavailable
+    try:
+        final_results = load_dataframe("final_results")
+        best_rows = best_model_rows(final_results)
+        deltas = get_metric_deltas(final_results)
+        data_available = True
+    except Exception as e:
+        st.warning(f"⚠️ Model results data not available: {str(e)}")
+        data_available = False
+        best_rows = None
+        deltas = None
 
     st.markdown(
         """
@@ -55,16 +63,17 @@ def render_home_page() -> None:
         with col:
             render_section_card(title, body)
 
-    metric_cols = st.columns(4)
-    with metric_cols[0]:
-        render_metric_card("Best Model 1 AUC", f"{best_rows['Model 1']['auc']:.3f}", f"{deltas['model1_auc_delta']:+.3f} vs best individual")
-    with metric_cols[1]:
-        render_metric_card("Best Model 1 Recall", f"{best_rows['Model 1']['recall']:.3f}", f"{deltas['model1_recall_delta']:+.3f} vs best individual")
-    with metric_cols[2]:
-        render_metric_card("Best Model 2 AUC", f"{best_rows['Model 2']['auc']:.3f}", f"{deltas['model2_auc_delta']:+.3f} vs best individual")
-    with metric_cols[3]:
-        gap = best_rows["Model 2"]["auc"] - best_rows["Model 1"]["auc"]
-        render_metric_card("AUC Gap", f"{gap:+.3f}", f"{deltas['gap_delta']:+.3f} vs individual gap")
+    if data_available:
+        metric_cols = st.columns(4)
+        with metric_cols[0]:
+            render_metric_card("Best Model 1 AUC", f"{best_rows['Model 1']['auc']:.3f}", f"{deltas['model1_auc_delta']:+.3f} vs best individual")
+        with metric_cols[1]:
+            render_metric_card("Best Model 1 Recall", f"{best_rows['Model 1']['recall']:.3f}", f"{deltas['model1_recall_delta']:+.3f} vs best individual")
+        with metric_cols[2]:
+            render_metric_card("Best Model 2 AUC", f"{best_rows['Model 2']['auc']:.3f}", f"{deltas['model2_auc_delta']:+.3f} vs best individual")
+        with metric_cols[3]:
+            gap = best_rows["Model 2"]["auc"] - best_rows["Model 1"]["auc"]
+            render_metric_card("AUC Gap", f"{gap:+.3f}", f"{deltas['gap_delta']:+.3f} vs individual gap")
 
     st.markdown("### Study Overview")
     st.markdown(
