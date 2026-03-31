@@ -1,4 +1,12 @@
+from pathlib import Path
+import sys
+
 import streamlit as st
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from app.components.shap_display import render_patient_reason_summary, render_shap_section
 from app.components.styling import (
