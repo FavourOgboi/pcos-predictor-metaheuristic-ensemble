@@ -1,0 +1,21 @@
+# Large data and model files
+cleaned_data/
+data/
+models/
+images/
+notebooks/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+.git/
