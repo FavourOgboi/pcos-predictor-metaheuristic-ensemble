@@ -25,20 +25,20 @@ def apply_global_styles() -> None:
         }
         [data-testid="stSidebar"] * { color: white !important; }
 
-        [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] button {
+        [data-testid="stSidebar"] [data-testid^="stBaseButton"] button {
             background: #FFFFFF !important;
             color: #0A2342 !important;
             border: 1px solid #D9E6F3 !important;
             box-shadow: 0 2px 10px rgba(10,35,66,0.08);
         }
-        [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] button:hover {
+        [data-testid="stSidebar"] [data-testid^="stBaseButton"] button * {
+            color: #0A2342 !important;
+        }
+        [data-testid="stSidebar"] [data-testid^="stBaseButton"] button:hover {
             background: #F3F7FB !important;
         }
         [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] button {
-            background: linear-gradient(135deg, #1B4F8A, #2176AE) !important;
-            color: #FFFFFF !important;
-            border: none !important;
-            box-shadow: 0 3px 12px rgba(10,35,66,0.25);
+            border-left: 4px solid #2176AE !important;
         }
 
         .page-header {
