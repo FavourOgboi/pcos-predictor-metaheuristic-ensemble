@@ -25,6 +25,22 @@ def apply_global_styles() -> None:
         }
         [data-testid="stSidebar"] * { color: white !important; }
 
+        [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] button {
+            background: #FFFFFF !important;
+            color: #0A2342 !important;
+            border: 1px solid #D9E6F3 !important;
+            box-shadow: 0 2px 10px rgba(10,35,66,0.08);
+        }
+        [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] button:hover {
+            background: #F3F7FB !important;
+        }
+        [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] button {
+            background: linear-gradient(135deg, #1B4F8A, #2176AE) !important;
+            color: #FFFFFF !important;
+            border: none !important;
+            box-shadow: 0 3px 12px rgba(10,35,66,0.25);
+        }
+
         .page-header {
             background: linear-gradient(135deg, #0A2342 0%, #1B4F8A 50%, #2176AE 100%);
             padding: 2.5rem 2rem 2rem 2rem;
